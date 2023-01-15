@@ -114,12 +114,12 @@ def download(driver: WebDriver):
         action_tag.click()
 
     while True:
-        is_visible = driver.find_element(tags[0][1], tags[0][0]).is_displayed()
+        quias = len(driver.window_handles)
 
-        if is_visible:
+        if quias == 1:
             break
 
-        sleep(4.0)
+        sleep(2.0)
 
 
 def tratamento_arquivos():
