@@ -12,7 +12,7 @@ VERSION_CLI = 'HUNGER RUSH VERSION CLI 0.1'
 
 if __name__ == '__main__':
     if not ARQ_INIT.is_file():
-        print(f"[ERRO] Arquivo '{ARQ_INIT}' nao encontrador !")
+        print(f"[ERR] File '{ARQ_INIT}' not found !")
         sys.exit()
 
     config = configparser.ConfigParser()
@@ -49,9 +49,9 @@ if __name__ == '__main__':
                 flag_inv = args.invisible if args.invisible else "F"
                 invisible = True if flag_inv.upper()[0] == 'T' else False
 
-                print(f"Data Inicial -d: {args.date}")
-                print(f"Periodo dias -p: {dias}")
-                print(f"Navegador invisivel ? -i: {invisible}")
+                print(f"Initial date -d: {args.date}")
+                print(f"Period days -p: {dias}")
+                print(f"Invisible browser ? -i: {invisible}")
 
                 main_spider(args.date, dias, login, password, url, invisible)
         except Exception as e:
