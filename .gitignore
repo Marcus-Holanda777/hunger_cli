@@ -1,5 +1,7 @@
 .DS_Store
 Thumbs.db
+build
+**/build
 dist
 **/dist
 __pycache__
