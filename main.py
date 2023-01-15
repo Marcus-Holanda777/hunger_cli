@@ -45,7 +45,7 @@ if __name__ == '__main__':
     else:
         try:
             if args.date:
-                dias = args.period if args.period else 7
+                dias = args.period if args.period else 1
                 flag_inv = args.invisible if args.invisible else "F"
                 invisible = True if flag_inv.upper()[0] == 'T' else False
 
