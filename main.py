@@ -4,6 +4,7 @@ import configparser
 from pathlib import Path
 import sys
 from datetime import datetime
+from utils.utils import del_download
 
 
 ARQ_INIT = Path() / "config.init"
@@ -25,14 +26,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog="HUNGER RUSH",
         description="Download the .csv files",
-        epilog="Des. Marcus Holanda"
+        epilog="Des. Marcus Holanda",
+        fromfile_prefix_chars="_"
     )
 
     parser.version = VERSION_CLI
     parser.add_argument('-v', '--version', action="version")
     parser.add_argument('-d', '--date', help="initial date", type=lambda d: datetime.strptime(d, "%Y-%m-%d"), required=True)
-    parser.add_argument('-p', '--period', help="execution period", type=int)
-    parser.add_argument('-i', '--invisible', help="show or hide browser op: [F | T]", type=str)
+    parser.add_argument('-p', '--period', help="execution period", type=int, default=1)
+    parser.add_argument('-i', '--invisible', help="show or hide browser", action="store_true")
+    parser.add_argument('-r', '--remove', help="delete downloaded files", action='store_true')
     
     try:
 
@@ -41,18 +44,22 @@ if __name__ == '__main__':
     except Exception:
 
         parser.print_help()
+        sys.exit()
 
     else:
         try:
-            if args.date:
-                dias = args.period if args.period else 1
-                flag_inv = args.invisible if args.invisible else "F"
-                invisible = True if flag_inv.upper()[0] == 'T' else False
 
-                print(f"Initial date -d: {args.date}")
-                print(f"Period days -p: {dias}")
-                print(f"Invisible browser ? -i: {invisible}")
+            print(f"Initial date        -d: {args.date}")
+            print(f"Period days         -p: {args.period}")
+            print(f"Invisible browser ? -i: {args.invisible}")
+            print(f"Delete files ?      -r: {args.remove}")
 
-                main_spider(args.date, dias, login, password, url, invisible)
+            if args.remove:
+                del_download()
+
+            main_spider(args.date, args.period, login, password, url, args.invisible)
+
         except Exception as e:
+
             print(e)
+            sys.exit()
