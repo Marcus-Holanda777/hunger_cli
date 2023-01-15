@@ -30,6 +30,8 @@ Backup of *.doc*
 
 # Excel temporary
 ~$*.xls*
+*.xlsx
+~$*.xlsx
 
 # Excel Backup File
 *.xlk

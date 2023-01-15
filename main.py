@@ -31,11 +31,13 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--version', action="version")
     parser.add_argument('-d', '--date', help="initial date", type=str, required=True)
     parser.add_argument('-p', '--period', help="execution period", type=int)
-    parser.add_argument('-i', '--invisible', help="show or hide browser", type=bool)
+    parser.add_argument('-i', '--invisible', help="show or hide browser op: [F | T]", type=str)
 
     args = parser.parse_args()
 
     if args.date:
-        dias = args.period if args.period else 1
-        invisible = args.invisible if args.invisible else False
+        dias = args.period if args.period else 7
+        flag_inv = args.invisible if args.invisible else "F"
+        invisible = True if flag_inv.upper()[0] == 'T' else False
+
         main_spider(args.date, dias, login, password, url, invisible)
