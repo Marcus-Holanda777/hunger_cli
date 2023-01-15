@@ -10,7 +10,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from dateutil.parser import parse
 from pathlib import Path
 import mimetypes
 from os import makedirs
@@ -87,7 +86,7 @@ def nav_single_periodo(driver: WebDriver, per_date: datetime, seletores: Select,
         for op in seletores.options:
             op.click()
 
-            sleep(3.0)
+            sleep(2.0)
 
             download(driver)
 
@@ -120,14 +119,14 @@ def download(driver: WebDriver):
         if is_visible:
             break
 
-        sleep(2.0)
+        sleep(4.0)
 
 
 def tratamento_arquivos():
     return (
         pd.concat(
             [
-                pd.read_csv(c)
+                pd.read_csv(c, parse_dates=['End Date'])
                 for c in PATH_DOWNLOAD.glob("**/*.csv")
                 if c.stat().st_size > 0
             ]
@@ -140,7 +139,7 @@ def tratamento_arquivos():
     )
 
 
-def main_spider(init_date: str, days: int, login: str
+def main_spider(init_date: datetime, days: int, login: str
               , password: str, url: str, invisible: bool = False) -> None:
               
     if not PATH_DOWNLOAD.is_dir():
@@ -164,4 +163,6 @@ def main_spider(init_date: str, days: int, login: str
     nav_single_store(driver)
 
     lojas = nav_single_lojas(driver, By.ID, "storesDD")
-    nav_single_periodo(driver, parse(init_date), lojas, days)
+    nav_single_periodo(driver, init_date, lojas, days)
+
+    driver.quit()
