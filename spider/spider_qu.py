@@ -2,13 +2,13 @@ import configparser
 from pathlib import Path
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium import webdriver
-from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 from time import sleep
 from random import randint
 from dataclasses import dataclass
-from functools import partial
+from datetime import datetime
 
 # interacao com o teclado e mouse
 from selenium.webdriver import ActionChains, Keys
@@ -83,21 +83,40 @@ class SpiderQu:
             Navegacao(by=By.CSS_SELECTOR, tag="button[name='login-btn']", btn=True)
         ]
 
-        self.navegar(tags)
-
-        # TODO -> Esperar um elemento sair da tela
-        self.delay(5, 8)
-
+        self.navegar(tags=tags)
+        self.esperar_tag(By.XPATH, "//span[contains(text(), 'Close')]")
+        
         escape = ActionChains(self.driver).send_keys(Keys.ESCAPE)
         escape.perform()
 
+        self.delay(2, 4)
+
     
     def relatorio(self):
-        rel = self.esperar_tag(By.PARTIAL_LINK_TEXT, "Reports")
-        rel.click()
+        tags = [
+            Navegacao(by=By.PARTIAL_LINK_TEXT, tag="Reports", btn=True),
+            Navegacao(by=By.XPATH, tag="//span[contains(text(), 'Summary By Date')]", btn=True)
+        ]
 
-        sumary = self.esperar_tag(By.XPATH, "//span[contains(text(), 'Summary By Date')]")
-        sumary.click()
+        self.navegar(tags=tags)
+        self.delay(2, 4)
+
+    
+    def filtros(self, date_start: datetime = None):
+        print(date_start)
+
+        filtro = self.esperar_tag(By.CSS_SELECTOR, "strong[data-msgid='Show Filters']")
+        filtro.click()
+
+        selm = self.esperar_tag(By.TAG_NAME, "select")
+        
+        list_sel = Select(selm)
+        list_sel.select_by_value('range')
+        
+        # TODO: Definir intervalo de datas, para filtrar relatorio
+        intervalo = self.esperar_tag(By.CSS_SELECTOR, "button[class='button is-info']")
+        intervalo.click()
+
 
     def close(self) -> None:
         self.driver.quit()
@@ -106,10 +125,8 @@ class SpiderQu:
     def run(self) -> None:
         self.get_url()
         self.login()
-
-        self.delay(5, 8)
-
         self.relatorio()
+        self.filtros()
         # self.close()
 
 # Existe uma tela spos o login, informando as mudanças na pagina
