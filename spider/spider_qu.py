@@ -35,24 +35,42 @@ class Navegacao:
 
 
 class SpiderQu:
-    def __init__(self, url: str, implicitly_wait: float, login: str, password: str) -> None:
+    def __init__(self, url: str, implicitly_wait: float, 
+                       login: str, password: str, 
+                       date_start: datetime, date_end: datetime) -> None:
         self.url = url
         self.implicitly_wait = implicitly_wait
         self.user = login
         self.password = password
+        self.date_start = date_start
+        self.date_end = date_end
         self.service = FirefoxService(executable_path=GeckoDriverManager().install())
         self.driver = webdriver.Firefox(service=self.service)
     
 
-    def esperar_tag(self, by: By, tag: str, timeout: float = 30.0) -> None:
-        element = (
-            WebDriverWait(driver=self.driver, timeout=timeout)
-            .until(
-                EC.presence_of_element_located(
-                    (by, tag)
+    def esperar_tag(self, by: By, tag: str, timeout: float = 30.0, all: bool = False) -> None:
+        if not all:
+
+            element = (
+                WebDriverWait(driver=self.driver, timeout=timeout)
+                .until(
+                    EC.presence_of_element_located(
+                        (by, tag)
+                    )
                 )
             )
-        )
+
+        else:
+
+            element = (
+                WebDriverWait(driver=self.driver, timeout=timeout)
+                .until(
+                    EC.presence_of_all_elements_located(
+                        (by, tag)
+                    )
+                )
+            )
+
 
         return element
     
@@ -100,10 +118,28 @@ class SpiderQu:
 
         self.navegar(tags=tags)
         self.delay(2, 4)
+    
+
+    def date_from(self):
+        tbl_from = self.esperar_tag(By.XPATH, "//div[@]")
+        # TODO: Filtro YEAR
+        elm_year = self.esperar_tag(By.CSS_SELECTOR, "option[value='2023']").find_element(By.XPATH, "..")
+        sel_year = Select(elm_year)
+        sel_year.select_by_value(str(self.date_start.year - 1))
+
+        # TODO: Filtro MONTHY
+        elm_month = self.esperar_tag(By.CSS_SELECTOR, "option[value='0']").find_element(By.XPATH, "..")
+        sel_month = Select(elm_month)
+        sel_month.select_by_value(str(self.date_start.month))
+
+        # TODO: Filtro DAY
+    
+
+    def date_to(self):
+        ...
 
     
-    def filtros(self, date_start: datetime = None):
-        print(date_start)
+    def filtros(self):
 
         filtro = self.esperar_tag(By.CSS_SELECTOR, "strong[data-msgid='Show Filters']")
         filtro.click()
@@ -116,6 +152,9 @@ class SpiderQu:
         # TODO: Definir intervalo de datas, para filtrar relatorio
         intervalo = self.esperar_tag(By.CSS_SELECTOR, "button[class='button is-info']")
         intervalo.click()
+        
+        self.delay(2, 4)
+        self.date_from()
 
 
     def close(self) -> None:
@@ -138,5 +177,7 @@ if __name__ == '__main__':
         url=url, 
         implicitly_wait=30.0, 
         login=login, 
-        password=password
+        password=password,
+        date_start=datetime(2023, 2, 1),
+        date_end=datetime(2023, 2, 7)
     ).run()
