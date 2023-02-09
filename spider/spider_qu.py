@@ -1,14 +1,17 @@
-import configparser
+import mimetypes
 from pathlib import Path
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from time import sleep
 from random import randint
 from dataclasses import dataclass
 from datetime import datetime
+from openpyxl import load_workbook
+import pandas as pd
 
 # interacao com o teclado e mouse
 from selenium.webdriver import ActionChains, Keys
@@ -17,13 +20,14 @@ from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-ARQ_INIT = Path("c:\magoo\config.init")
-config = configparser.ConfigParser()
-config.read(ARQ_INIT)
+LIMIT_DAY = 31
 
-login = config['SESSION_QU']['Login']
-password = config['SESSION_QU']['Password']
-url = config['SESSION_QU']['Url']
+MIME_TYPES = ";".join(mimetypes.types_map.values())
+DT_REF = datetime.now()
+PATH_DOWNLOAD = (
+    Path() / "download_qu" /
+    f"{DT_REF.day:02d}{DT_REF.month:02d}{DT_REF.year}"
+)
 
 
 @dataclass()
@@ -35,17 +39,34 @@ class Navegacao:
 
 
 class SpiderQu:
-    def __init__(self, url: str, implicitly_wait: float, 
-                       login: str, password: str, 
-                       date_start: datetime, date_end: datetime) -> None:
+    def __init__(self, url: str, 
+                       implicitly_wait: float, 
+                       login: str, 
+                       password: str, 
+                       date_start: datetime, 
+                       date_end: datetime,
+                       invisible: bool = False) -> None:
         self.url = url
         self.implicitly_wait = implicitly_wait
         self.user = login
         self.password = password
         self.date_start = date_start
         self.date_end = date_end
+        self.invisible = invisible
+        self.options = self.__options()
         self.service = FirefoxService(executable_path=GeckoDriverManager().install())
-        self.driver = webdriver.Firefox(service=self.service)
+        self.driver = webdriver.Firefox(service=self.service, options=self.options)
+
+
+    def __options(self):
+        options = FirefoxOptions()
+        options.set_preference("browser.download.folderList", 2)
+        options.set_preference("browser.download.manager.showWhenStarting", False)
+        options.set_preference("browser.download.dir", str(PATH_DOWNLOAD.absolute()))
+        options.set_preference("browser.helperApps.neverAsk.saveToDisk", MIME_TYPES)
+        options.headless = self.invisible
+
+        return options
     
 
     def esperar_tag(self, by: By, tag: str, timeout: float = 30.0, all: bool = False) -> None:
@@ -120,25 +141,119 @@ class SpiderQu:
         self.delay(2, 4)
     
 
-    def date_from(self):
-        tbl_from = self.esperar_tag(By.XPATH, "//div[@]")
-        # TODO: Filtro YEAR
-        elm_year = self.esperar_tag(By.CSS_SELECTOR, "option[value='2023']").find_element(By.XPATH, "..")
-        sel_year = Select(elm_year)
-        sel_year.select_by_value(str(self.date_start.year - 1))
+    def date_from_to(self):
+        # TODO: LOCALIZAR A LABEL FROM
+        tags = ('From', 'To')
 
-        # TODO: Filtro MONTHY
-        elm_month = self.esperar_tag(By.CSS_SELECTOR, "option[value='0']").find_element(By.XPATH, "..")
-        sel_month = Select(elm_month)
-        sel_month.select_by_value(str(self.date_start.month))
+        for tag_label in tags:
+            tbl_from = (
+                self.esperar_tag(By.XPATH, f"//label[normalize-space(text())='{tag_label}']")
+                 .find_element(By.XPATH, "..")
+            )
 
-        # TODO: Filtro DAY
+            if tag_label == 'From':
+                date_ref = self.date_start
+            else:
+                date_ref = self.date_end
+
+            # TODO: Filtro YEAR
+            elm_year = tbl_from.find_element(By.CSS_SELECTOR, f"option[value='{str(date_ref.year)}']").find_element(By.XPATH, "..")
+            sel_year = Select(elm_year)
+            sel_year.select_by_value(str(date_ref.year))
+
+            # TODO: Filtro MONTHY
+            elm_month = tbl_from.find_element(By.CSS_SELECTOR, f"option[value='{str(date_ref.month - 1)}']").find_element(By.XPATH, "..")
+            sel_month = Select(elm_month)
+            sel_month.select_by_value(str(date_ref.month - 1))
+
+            # TODO: Filtro DAY
+            elm_day = tbl_from.find_element(By.LINK_TEXT, str(date_ref.day))
+            elm_day.click()
+
+            self.delay(2, 4)
+        
+        btn_sucess = self.esperar_tag(By.XPATH, "//button[@class='button is-success']")
+        btn_sucess.click()
+
+
+    def store_list(self) -> list[str]:
+        # TODO: Botao para mostra a lista
+        btn_list = self.esperar_tag(By.XPATH, "//input[@value='store-list']")
+        ActionChains(self.driver).click(btn_list).perform()
+
+        # TODO: Botao que mostra a lista de lojas
+        self.btn_danger().click()
+        self.delay(2, 4)
+
+        # TODO: Capturar lista de lojas
+        list_store = self.esperar_tag(By.XPATH, "//a[contains(@class,'dropdown-item')]", all=True)
+        all_link = [
+            link.text for link in list_store
+        ]
+
+        # TODO: Excluir loja da lista
+        return all_link
+        
+
+    def espera_download(self):
+        while True:
+            is_visible = (
+                WebDriverWait(self.driver, 30.0, 1.0)
+                 .until_not(
+                   EC.presence_of_element_located((By.XPATH, "//div[@class='modal-background']"))
+                 )
+            )
+
+            is_quias = len(self.driver.window_handles) == 1
+
+            if is_visible and is_quias:
+                break
+
+            sleep(2.0)
     
 
-    def date_to(self):
-        ...
+    def btn_danger(self):
+        return (
+            self.esperar_tag(By.XPATH, "//input[@placeholder='Select Store']")
+        )
 
+
+    def btn_export(self):
+        return (
+             self.esperar_tag(
+                By.XPATH, 
+                "//button[@class='button is-light']//span[normalize-space(text())='Export']"
+            )
+        )
     
+
+    def btn_download(self):
+        return (
+            self.esperar_tag(
+                By.XPATH, 
+                "//button[@class='button is-light']//span[normalize-space(text())='Download File']"
+            )
+        )
+            
+
+    def download(self, all_link: list[str]) -> None:
+        original = self.driver.current_window_handle
+
+        for link in all_link:
+            self.btn_danger().click()
+            
+            self.delay(2, 4)
+            self.esperar_tag(By.LINK_TEXT, link).click()
+            
+            self.btn_export().click()
+            self.btn_download().click()
+
+            self.espera_download()
+
+            self.driver.switch_to.window(original)
+            self.esperar_tag(By.XPATH, "//a[@class='tag is-delete']").click()
+
+
     def filtros(self):
 
         filtro = self.esperar_tag(By.CSS_SELECTOR, "strong[data-msgid='Show Filters']")
@@ -154,7 +269,54 @@ class SpiderQu:
         intervalo.click()
         
         self.delay(2, 4)
-        self.date_from()
+        self.date_from_to()
+
+        all_link = self.store_list()
+        self.download(all_link=all_link)
+
+
+    def tratamento_base(self, arq: Path):
+        def name_location() -> str:
+            wb = load_workbook(arq, read_only=True)
+            ws = wb.active
+
+            name = (
+                ws.cell(6, 1)
+                 .value
+                 .split(':')[1]
+                 .split(',')[0]
+            )
+            wb.close()
+
+            return name
+        
+        def transform(df: pd.DataFrame) -> pd.DataFrame:
+            return (
+                pd
+                  .melt(df, id_vars=['Section', 'Metric'], var_name="Date", value_name='Total')
+                  .assign(Date = lambda _df: _df['Date'].map(pd.to_datetime), Location = name_location(arq))
+              )
+        
+        return (
+            pd
+              .read_excel(arq, skiprows=7)
+              .assign(Section = lambda _df: _df['Section'].fillna(method='ffill'))
+              .iloc[:, :-1]
+              .query("Metric != 'Total'")
+              .pipe(transform)
+        )
+
+    
+    def concat_path(self):
+        return ( 
+            pd.concat(
+                [
+                    self.tratamento_base(arq)
+                    for arq in PATH_DOWNLOAD.glob("**/*.xlsx")
+                    if arq.stat().st_size > 0
+                ]
+            )
+        )
 
 
     def close(self) -> None:
@@ -166,18 +328,9 @@ class SpiderQu:
         self.login()
         self.relatorio()
         self.filtros()
-        # self.close()
+        self.close()
 
-# Existe uma tela spos o login, informando as mudanças na pagina
-# solução simular o click do butão ESC para sai da pagina
-# ou encontrar a tag de fechar o informativo
+        self.delay(4,6)
 
-if __name__ == '__main__':
-    SpiderQu(
-        url=url, 
-        implicitly_wait=30.0, 
-        login=login, 
-        password=password,
-        date_start=datetime(2023, 2, 1),
-        date_end=datetime(2023, 2, 7)
-    ).run()
+        df = self.concat_path()
+        df.to_excel(PATH_DOWNLOAD / 'REPORT_QU.xlsx', index=False)

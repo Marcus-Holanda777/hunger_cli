@@ -1,14 +1,16 @@
 from spider.spider import main_spider
+from spider.spider_qu import SpiderQu
 import argparse
 import configparser
 from pathlib import Path
 import sys
 from datetime import datetime
-from utils.utils import del_download
+from utils.utils import del_download, load_config
+from dateutil.relativedelta import relativedelta
 
 
 ARQ_INIT = Path() / "config.init"
-VERSION_CLI = 'HUNGER RUSH VERSION CLI 0.1'
+VERSION_CLI = 'HUNGER RUSH VERSION CLI 0.2'
 
 
 if __name__ == '__main__':
@@ -18,10 +20,6 @@ if __name__ == '__main__':
 
     config = configparser.ConfigParser()
     config.read(ARQ_INIT)
-    
-    login = config['SESSION']['Login']
-    password = config['SESSION']['Password']
-    url = config['SESSION']['Url']
 
     parser = argparse.ArgumentParser(
         prog="HUNGER RUSH",
@@ -32,8 +30,10 @@ if __name__ == '__main__':
 
     parser.version = VERSION_CLI
     parser.add_argument('-v', '--version', action="version")
-    parser.add_argument('-d', '--date', help="initial date", type=lambda d: datetime.strptime(d, "%Y-%m-%d"), required=True)
-    parser.add_argument('-p', '--period', help="execution period", type=int, default=1)
+
+    parser.add_argument('report', help='select web report[rush, qu]', choices=['rush', 'qu'])
+    parser.add_argument('-s', '--startdate', help="initial date", type=lambda d: datetime.strptime(d, "%Y-%m-%d"), required=True)
+    parser.add_argument('-e', '--enddate', help="final date", type=lambda d: datetime.strptime(d, "%Y-%m-%d"), required=True)
     parser.add_argument('-i', '--invisible', help="show or hide browser", action="store_true")
     parser.add_argument('-r', '--remove', help="delete downloaded files", action='store_true')
     
@@ -48,16 +48,32 @@ if __name__ == '__main__':
 
     else:
         try:
-
-            print(f"Initial date        -d: {args.date}")
-            print(f"Period days         -p: {args.period}")
+            
+            print(f'Reports: {args.report.upper()}\n')
+            print(f"Initial date        -s: {args.startdate}")
+            print(f"Final date          -e: {args.enddate}")
             print(f"Invisible browser ? -i: {args.invisible}")
             print(f"Delete files ?      -r: {args.remove}")
+            
+            session = load_config(config=config, report=args.report)
 
             if args.remove:
-                del_download()
+                del_download(report=args.report)
+            
+            if args.report == 'qu':
+                SpiderQu(
+                    url=session['url'],
+                    implicitly_wait=30.0,
+                    login=session['login'],
+                    password=session['password'],
+                    date_start=args.startdate,
+                    date_end=args.enddate,
+                    invisible=args.invisible
+                ).run()
 
-            main_spider(args.date, args.period, login, password, url, args.invisible)
+            elif args.report == 'rush':
+                period = relativedelta(args.enddate, args.startdate).days
+                main_spider(args.startdate, period, session['login'], session['password'], session['url'], args.invisible)
 
         except Exception as e:
 
