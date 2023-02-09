@@ -196,6 +196,8 @@ class SpiderQu:
         
 
     def espera_download(self):
+        original = self.driver.current_window_handle
+
         while True:
             is_visible = (
                 WebDriverWait(self.driver, 30.0, 1.0)
@@ -210,6 +212,8 @@ class SpiderQu:
                 break
 
             sleep(2.0)
+        
+        self.driver.switch_to.window(original)
     
 
     def btn_danger(self):
@@ -237,8 +241,6 @@ class SpiderQu:
             
 
     def download(self, all_link: list[str]) -> None:
-        original = self.driver.current_window_handle
-
         for link in all_link:
             self.btn_danger().click()
             
@@ -249,8 +251,6 @@ class SpiderQu:
             self.btn_download().click()
 
             self.espera_download()
-
-            self.driver.switch_to.window(original)
             self.esperar_tag(By.XPATH, "//a[@class='tag is-delete']").click()
 
 
@@ -276,7 +276,7 @@ class SpiderQu:
 
 
     def tratamento_base(self, arq: Path):
-        def name_location() -> str:
+        def name_location(arq: Path) -> str:
             wb = load_workbook(arq, read_only=True)
             ws = wb.active
 
@@ -324,6 +324,7 @@ class SpiderQu:
     
 
     def run(self) -> None:
+        
         self.get_url()
         self.login()
         self.relatorio()
@@ -333,4 +334,4 @@ class SpiderQu:
         self.delay(4,6)
 
         df = self.concat_path()
-        df.to_excel(PATH_DOWNLOAD / 'REPORT_QU.xlsx', index=False)
+        df.to_excel('REPORT_QU.xlsx', index=False)

@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         prog="HUNGER RUSH",
-        description="Download the .csv files",
+        description="Download the .csv, .xlsx files",
         epilog="Des. Marcus Holanda",
         fromfile_prefix_chars="_"
     )
@@ -61,6 +61,11 @@ if __name__ == '__main__':
                 del_download(report=args.report)
             
             if args.report == 'qu':
+                period = (args.enddate - args.startdate).days
+
+                if period > 31:
+                    raise ValueError(f"\n[ERR] Days {period} > 31")
+
                 SpiderQu(
                     url=session['url'],
                     implicitly_wait=30.0,
@@ -72,7 +77,7 @@ if __name__ == '__main__':
                 ).run()
 
             elif args.report == 'rush':
-                period = relativedelta(args.enddate, args.startdate).days
+                period = (args.enddate - args.startdate).days
                 main_spider(args.startdate, period, session['login'], session['password'], session['url'], args.invisible)
 
         except Exception as e:

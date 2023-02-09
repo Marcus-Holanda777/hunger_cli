@@ -93,7 +93,7 @@ def nav_single_periodo(driver: WebDriver, per_date: datetime, seletores: Select,
     sleep(6.0)
 
     df = tratamento_arquivos()
-    df.to_excel('BASE.xlsx', index=False)
+    df.to_excel('REPORT_RUSH.xlsx', index=False)
 
 
 def nav_single_lojas(driver: WebDriver, by: By, tag: str) -> Select:
