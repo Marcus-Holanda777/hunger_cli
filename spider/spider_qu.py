@@ -297,12 +297,16 @@ class SpiderQu:
                   .assign(Date = lambda _df: _df['Date'].map(pd.to_datetime), Location = name_location(arq))
               )
         
+        not_total = "total"
+        not_employees = "employees"
+
         return (
             pd
               .read_excel(arq, skiprows=7)
               .assign(Section = lambda _df: _df['Section'].fillna(method='ffill'))
               .iloc[:, :-1]
-              .query("Metric != 'Total'")
+              .query("Metric.str.lower() != @not_total")
+              .query("Section.str.lower() != @not_employees")
               .pipe(transform)
         )
 

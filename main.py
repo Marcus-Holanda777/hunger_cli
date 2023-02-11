@@ -6,7 +6,6 @@ from pathlib import Path
 import sys
 from datetime import datetime
 from utils.utils import del_download, load_config
-from dateutil.relativedelta import relativedelta
 
 
 ARQ_INIT = Path() / "config.init"
@@ -77,7 +76,8 @@ if __name__ == '__main__':
                 ).run()
 
             elif args.report == 'rush':
-                period = (args.enddate - args.startdate).days
+                period = (args.enddate - args.startdate).days + 1
+
                 main_spider(args.startdate, period, session['login'], session['password'], session['url'], args.invisible)
 
         except Exception as e:
