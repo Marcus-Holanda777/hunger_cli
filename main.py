@@ -1,5 +1,6 @@
 from spider.spider import main_spider
 from spider.spider_qu import SpiderQu
+from spider.spider_sales import SpiderSales
 import argparse
 import configparser
 from pathlib import Path
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     parser.version = VERSION_CLI
     parser.add_argument('-v', '--version', action="version")
 
-    parser.add_argument('report', help='select web report[rush, qu]', choices=['rush', 'qu'])
+    parser.add_argument('report', help='select web report[rush, qu, sales]', choices=['rush', 'qu', 'sales'])
     parser.add_argument('-s', '--startdate', help="initial date", type=lambda d: datetime.strptime(d, "%Y-%m-%d"), required=True)
     parser.add_argument('-e', '--enddate', help="final date", type=lambda d: datetime.strptime(d, "%Y-%m-%d"), required=True)
     parser.add_argument('-i', '--invisible', help="show or hide browser", action="store_true")
@@ -79,6 +80,20 @@ if __name__ == '__main__':
                 period = (args.enddate - args.startdate).days + 1
 
                 main_spider(args.startdate, period, session['login'], session['password'], session['url'], args.invisible)
+            
+            elif args.report == 'sales':
+                period = (args.enddate - args.startdate).days + 1
+
+                SpiderSales(
+                    url=session['url'],
+                    implicitly_wait=30.0,
+                    login=session['login'],
+                    password=session['password'],
+                    date_start=args.startdate,
+                    periodo=period,
+                    invisible=args.invisible
+                ).run()
+
 
         except Exception as e:
 

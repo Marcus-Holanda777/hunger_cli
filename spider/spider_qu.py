@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from openpyxl import load_workbook
 import pandas as pd
+from os import makedirs
 
 # interacao com o teclado e mouse
 from selenium.webdriver import ActionChains, Keys
@@ -59,6 +60,10 @@ class SpiderQu:
 
 
     def __options(self):
+
+        if not PATH_DOWNLOAD.is_dir():
+            makedirs(PATH_DOWNLOAD)
+
         options = FirefoxOptions()
         options.set_preference("browser.download.folderList", 2)
         options.set_preference("browser.download.manager.showWhenStarting", False)
