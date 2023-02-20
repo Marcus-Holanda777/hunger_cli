@@ -21,6 +21,8 @@ venv
 *.spec
 build
 dist
+xml
+**/xml
 
 *.tmp
 
@@ -43,3 +45,4 @@ Backup of *.doc*
 
 # Visio autosave temporary files
 *.~vsd*
+*.xml

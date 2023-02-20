@@ -9,7 +9,7 @@ from utils.utils import del_download, load_config
 
 
 ARQ_INIT = Path() / "config.init"
-VERSION_CLI = 'HUNGER RUSH VERSION CLI 0.2'
+VERSION_CLI = 'HUNGER RUSH VERSION CLI 0.3'
 
 
 if __name__ == '__main__':
@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         prog="HUNGER RUSH",
-        description="Download the .csv, .xlsx files",
+        description="Download the .csv, .xlsx, .xml files",
         epilog="Des. Marcus Holanda",
         fromfile_prefix_chars="_"
     )
