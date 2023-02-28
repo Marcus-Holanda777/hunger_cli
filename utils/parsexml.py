@@ -27,6 +27,21 @@ class ParseXml:
         return ' '.join(text)
 
 
+    def sep_case(self, text):
+        word = ''
+        lista = []
+
+        for i, c in enumerate(text, 1):
+            word += c
+            if i > 1 and c.isupper():
+                lista.append(word[:-1])
+                word = c
+            elif len(text) == i:
+                lista.append(word)
+
+        return '_'.join(lista)
+
+
     def __get_root(self):
         tree = etree.parse(self.caminho)
         root = tree.getroot()
@@ -49,7 +64,16 @@ class ParseXml:
 
     def set_columns(self, elm):
         self.columns = [self.format_text(c) for c in elm.xpath("Group[@Level='2']//TextValue/text()")]
-        self.columns.insert(0, 'Store Name')
+        self.columns.insert(0, 'Store_Name')
+        self.columns.insert(1, 'Date')
+
+
+    def set_columns_details(self, elm):
+        self.columns = [
+                self.sep_case(self.format_text(c)[:-1])
+                for c in elm.xpath(".//Field/@Name")
+        ]
+        self.columns.insert(0, 'Store_Name')
         self.columns.insert(1, 'Date')
     
 
@@ -68,6 +92,8 @@ class ParseXml:
             pd.DataFrame(self.data)
              .astype({'Date': np.datetime64})
              .pipe(convert_type)
+             .drop(columns='Total_Sale')
+             .drop_duplicates(subset=['Store_Name', 'Date', 'Order_Type'])
         )
 
 
@@ -79,10 +105,11 @@ class ParseXml:
             self.set_store(elm)
 
             #TODO: Retornar nome das colunas
-            self.set_columns(elm)
+            # self.set_columns(elm)
 
             # TODO: Retornar os valores
             for value in elm.xpath(".//Details[@Level='3']"):
+                self.set_columns_details(value)
                 self.set_values(value)
 
                 add = dict(zip(self.columns, self.values))
