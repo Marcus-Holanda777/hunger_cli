@@ -84,8 +84,16 @@ class ParseXml:
 
     
     def etl_xml(self):
+        # ERRO na converção de tipos -- 
+        # caracteres não numericos como % porcentagem
         def convert_type(df: pd.DataFrame) -> pd.DataFrame:
+            # adicionado dia 15/04/2023
+            df[df.columns[3:]] = df[df.columns[3:]].apply(
+                lambda x: x.str.replace(r'[^0-9\.]', '', regex=True)
+            )
+
             df[df.columns[3:]] = df[df.columns[3:]].astype('float')
+
             return df
 
         return (
