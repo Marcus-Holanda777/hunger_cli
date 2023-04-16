@@ -13,19 +13,25 @@ class ParseXml:
         self.root = self.__get_root()
         self.data = []
 
-
     def format_text(self, text):
+        # retirado o 'string.punctuation' do '.strip'
         text = re.sub(r'\n|/', ' ', text)
         text = [c for c in
             [
-                w.strip(string.punctuation+string.whitespace)
+                w.strip(string.whitespace)
                 for w in text.split(' ')
             ]
             if c != ''
         ]
 
-        return ' '.join(text)
+        # alterar o numero 1 para nada e 2 para %
+        text = ' '.join(text)
+        text = (
+            text.replace('1', '')
+            .replace('2', '_%')
+        )
 
+        return text
 
     def sep_case(self, text):
         word = ''
@@ -41,7 +47,6 @@ class ParseXml:
 
         return '_'.join(lista)
 
-
     def __get_root(self):
         tree = etree.parse(self.caminho)
         root = tree.getroot()
@@ -50,33 +55,24 @@ class ParseXml:
             doc.tag = doc.tag[len(self.ns):]
         return root
 
-
     def set_periodo(self):
         self.periodo = (
             self.root.find('ReportHeader/Section/Field[@Name="EndDate1"]/Value')
             .text[:10]
         )
     
-
     def set_store(self, elm):
         self.store = elm.find('.//Value').text
-    
-
-    def set_columns(self, elm):
-        self.columns = [self.format_text(c) for c in elm.xpath("Group[@Level='2']//TextValue/text()")]
-        self.columns.insert(0, 'Store_Name')
-        self.columns.insert(1, 'Date')
-
 
     def set_columns_details(self, elm):
+        # retirado [:-1]
         self.columns = [
-                self.sep_case(self.format_text(c)[:-1])
+                self.sep_case(self.format_text(c))
                 for c in elm.xpath(".//Field/@Name")
         ]
         self.columns.insert(0, 'Store_Name')
         self.columns.insert(1, 'Date')
     
-
     def set_values(self, elm):
         self.values = elm.xpath(".//Value/text()")
         self.values.insert(0, self.store)
@@ -111,9 +107,6 @@ class ParseXml:
         for elm in self.root.xpath("//Group[@Level='1']"):
             # TODO: Retornar o nome da filial
             self.set_store(elm)
-
-            #TODO: Retornar nome das colunas
-            # self.set_columns(elm)
 
             # TODO: Retornar os valores
             for value in elm.xpath(".//Details[@Level='3']"):

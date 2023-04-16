@@ -1,0 +1,9 @@
+-- Alteração no modulo Parse XML, função para retirar os caracteres de texto antes de converter os dados para float.
+   15/04/2023 19:32
+
+-- Retirado o string.punctation, da função strip para preservar o simbolo % na coluna nova "Net_sales2"
+   16/04/2023 12:11
+
+-- Na função "format_text" deixei o ultimo caractere que seria o numero da coluna, e substituir o numero 2 pelo %
+   o numero 1 é retirado
+   16/04/2023 12:11
