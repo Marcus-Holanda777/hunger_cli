@@ -1,16 +1,13 @@
 from utils.parsexml import ParseXml
 
 # manager do driver firefox e webdriver
-from webdriver_manager.firefox import GeckoDriverManager
 from selenium import webdriver
 
 # servico e cinfiguracao do driver
-from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 # selecionar tags
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.select import Select
 
 # interacao com o teclado e mouse
 from selenium.webdriver import ActionChains, Keys
@@ -63,8 +60,7 @@ class SpiderSales:
         self.periodo = periodo
         self.invisible = invisible
         self.options = self.__options()
-        self.service = FirefoxService(executable_path=GeckoDriverManager().install())
-        self.driver = webdriver.Firefox(service=self.service, options=self.options)
+        self.driver = webdriver.Firefox(options=self.options)
     
 
     def __options(self):
