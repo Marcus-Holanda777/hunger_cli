@@ -297,7 +297,6 @@ class SpiderQu:
     ) -> None:
 
         for __, text in all_link:
-            print(text)
             self.btn_danger().click()
             self.delay(2, 4)
                 
