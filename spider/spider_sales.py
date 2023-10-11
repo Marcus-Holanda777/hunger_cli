@@ -131,6 +131,7 @@ class SpiderSales:
     
     
     def close(self) -> None:
+        self.delay(4, 4)
         self.driver.quit()
 
 

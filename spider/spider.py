@@ -162,5 +162,6 @@ def main_spider(init_date: datetime, days: int, login: str
 
     lojas = nav_single_lojas(driver, By.ID, "storesDD")
     nav_single_periodo(driver, init_date, lojas, days)
-
+    
+    sleep(4.0)
     driver.quit()
