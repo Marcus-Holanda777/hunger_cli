@@ -1,11 +1,20 @@
+"""
+   BUG: Removido do projeto
+        self.service = FirefoxService(executable_path=GeckoDriverManager().install())
+        self.driver = webdriver.Firefox(service=self.service, options=self.options)
+        
+        from selenium.webdriver.firefox.service import Service as FirefoxService
+        from webdriver_manager.firefox import GeckoDriverManager
+    
+    * Selenium atualizado para a versao 4.14
+"""
 import mimetypes
 from pathlib import Path
-from webdriver_manager.firefox import GeckoDriverManager
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.remote.webelement import WebElement
 from time import sleep
 from random import randint
 from dataclasses import dataclass
@@ -40,13 +49,17 @@ class Navegacao:
 
 
 class SpiderQu:
-    def __init__(self, url: str, 
-                       implicitly_wait: float, 
-                       login: str, 
-                       password: str, 
-                       date_start: datetime, 
-                       date_end: datetime,
-                       invisible: bool = False) -> None:
+    def __init__(
+        self, 
+        url: str, 
+        implicitly_wait: float,
+        login: str, 
+        password: str, 
+        date_start: datetime, 
+        date_end: datetime,
+        invisible: bool = False
+    ) -> None:
+
         self.url = url
         self.implicitly_wait = implicitly_wait
         self.user = login
@@ -55,8 +68,7 @@ class SpiderQu:
         self.date_end = date_end
         self.invisible = invisible
         self.options = self.__options()
-        self.service = FirefoxService(executable_path=GeckoDriverManager().install())
-        self.driver = webdriver.Firefox(service=self.service, options=self.options)
+        self.driver = webdriver.Firefox(options=self.options)
 
 
     def __options(self):
@@ -74,7 +86,14 @@ class SpiderQu:
         return options
     
 
-    def esperar_tag(self, by: By, tag: str, timeout: float = 30.0, all: bool = False) -> None:
+    def esperar_tag(
+        self, 
+        by: By, 
+        tag: str, 
+        timeout: float = 30.0, 
+        all: bool = False
+    ) -> list[WebElement] | WebElement:
+
         if not all:
 
             element = (
@@ -101,7 +120,11 @@ class SpiderQu:
         return element
     
 
-    def navegar(self, tags: list[Navegacao]) -> None:
+    def navegar(
+        self, 
+        tags: list[Navegacao]
+    ) -> None:
+
         for tag in tags:
             action_tag = self.esperar_tag(tag.by, tag.tag)
 
@@ -111,7 +134,12 @@ class SpiderQu:
                 action_tag.click()
 
 
-    def delay(self, start: int, end: int) -> None:
+    def delay(
+        self, 
+        start: int, 
+        end: int
+    ) -> None:
+
         espera =  randint(start, end)
         sleep(float(espera))
     
@@ -181,23 +209,40 @@ class SpiderQu:
         btn_sucess.click()
 
 
-    def store_list(self) -> list[str]:
+    def store_list(self) -> list[tuple[WebElement, str]]:
         # TODO: Botao para mostra a lista
         btn_list = self.esperar_tag(By.XPATH, "//input[@value='store-list']")
         ActionChains(self.driver).click(btn_list).perform()
 
         # TODO: Botao que mostra a lista de lojas
         self.btn_danger().click()
-        self.delay(2, 4)
+        self.delay(2, 4) # 2, 4
 
         # TODO: Capturar lista de lojas
-        list_store = self.esperar_tag(By.XPATH, "//a[contains(@class,'dropdown-item')]", all=True)
-        all_link = [
-            link.text for link in list_store
+        # classe anterior //a[contains(@class,'dropdown-item')]
+        # classe atual -- o-acp__item
+        list_store = self.esperar_tag(
+            By.XPATH, 
+            "//div[contains(@class,'acp__item')]", 
+            all=True
+        )
+
+        # TODO: Retornar uma lista de tuplas
+        # com o elemento e o texto
+        # caso precise utilizar
+        # 10/10/2023    
+        list_all = [
+            *zip(
+                list_store, 
+                map(
+                    lambda el: el.text.strip(),
+                    list_store
+                )
+            )
         ]
 
         # TODO: Excluir loja da lista
-        return all_link
+        return list_all
         
 
     def espera_download(self):
@@ -245,18 +290,38 @@ class SpiderQu:
         )
             
 
-    def download(self, all_link: list[str]) -> None:
-        for link in all_link:
+    def download(
+        self, 
+        all_link: list[tuple[WebElement, str]]
+    ) -> None:
+
+        for __, text in all_link:
+            print(text)
             self.btn_danger().click()
-            
             self.delay(2, 4)
-            self.esperar_tag(By.LINK_TEXT, link).click()
-            
+                
+            # NOTE: Alterado dia 10/10/2023
+            # Nao e mais um link
+            # self.esperar_tag(By.LINK_TEXT, link).click()
+            # O ELEMENTO esta sumindo do DRIVER
+            link_new = self.esperar_tag(
+                By.XPATH, 
+                f'//div[normalize-space(text())="{text}"]'
+            )
+            link_new.click()
+
             self.btn_export().click()
             self.btn_download().click()
-
             self.espera_download()
-            self.esperar_tag(By.XPATH, "//a[@class='tag is-delete']").click()
+
+            # NOTE: Alterado dia 10/10/2023
+            # antes By.XPATH, "//a[@class='tag is-delete']")
+            # alterado 'o-inputit__item__close
+            # self.esperar_tag(By.XPATH, "//a[@class='tag is-delete']").click()
+            self.esperar_tag(
+                By.XPATH, 
+                "//span[contains(@class, 'o-inputit__item__close')]"
+            ).click()
 
 
     def filtros(self):
@@ -280,7 +345,11 @@ class SpiderQu:
         self.download(all_link=all_link)
 
 
-    def tratamento_base(self, arq: Path):
+    def tratamento_base(
+        self, 
+        arq: Path
+    ) -> pd.DataFrame:
+
         def name_location(arq: Path) -> str:
             wb = load_workbook(arq, read_only=True)
             ws = wb.active
