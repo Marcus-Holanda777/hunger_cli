@@ -145,7 +145,6 @@ def main_spider(init_date: datetime, days: int, login: str
     if not PATH_DOWNLOAD.is_dir():
         makedirs(PATH_DOWNLOAD)
 
-    service = FirefoxService(executable_path=GeckoDriverManager().install())
     options = FirefoxOptions()
     options.set_preference("browser.download.folderList", 2)
     options.set_preference("browser.download.manager.showWhenStarting", False)
@@ -153,7 +152,7 @@ def main_spider(init_date: datetime, days: int, login: str
     options.set_preference("browser.helperApps.neverAsk.saveToDisk", MIME_TYPES)
     options.headless = invisible
 
-    driver = webdriver.Firefox(service=service, options=options)
+    driver = webdriver.Firefox(options=options)
 
     driver.get(url = url)
     driver.implicitly_wait(30)
