@@ -73,7 +73,9 @@ class SpiderSales:
         options.set_preference("browser.download.manager.showWhenStarting", False)
         options.set_preference("browser.download.dir", str(PATH_DOWNLOAD.absolute()))
         options.set_preference("browser.helperApps.neverAsk.saveToDisk", MIME_TYPES)
-        options.headless = self.invisible
+
+        if self.invisible:
+            options.add_argument("-headless")
 
         return options
     

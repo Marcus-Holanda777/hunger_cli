@@ -148,7 +148,8 @@ def main_spider(init_date: datetime, days: int, login: str
     options.set_preference("browser.download.manager.showWhenStarting", False)
     options.set_preference("browser.download.dir", str(PATH_DOWNLOAD.absolute()))
     options.set_preference("browser.helperApps.neverAsk.saveToDisk", MIME_TYPES)
-    options.headless = invisible
+    if invisible:
+        options.add_argument("-headless")
 
     driver = webdriver.Firefox(options=options)
 
