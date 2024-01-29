@@ -212,7 +212,10 @@ class SpiderQu:
 
     def store_list(self) -> list[tuple[WebElement, str]]:
         # TODO: Botao para mostra a lista
-        btn_list = self.esperar_tag(By.XPATH, "//input[@value='store-list']")
+        # ALTERADO DIA 29/01/2024
+        # ANTES: btn_list = self.esperar_tag(By.XPATH, "//input[@value='store-list']")
+
+        btn_list = self.esperar_tag(By.XPATH, "//span[normalize-space(text())='Store List']")
         ActionChains(self.driver).click(btn_list).perform()
 
         # TODO: Botao que mostra a lista de lojas

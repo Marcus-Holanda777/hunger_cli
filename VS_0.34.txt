@@ -7,3 +7,6 @@
 -- Na função "format_text" deixei o ultimo caractere que seria o numero da coluna, e substituir o numero 2 pelo %
    o numero 1 é retirado
    16/04/2023 12:11
+
+-- Alterado a tag 'Store List', foi retirado o input -> para um Span
+   29/01/2024
